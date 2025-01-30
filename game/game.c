@@ -24,6 +24,7 @@ int verifyLogin(const char *username, const char *password);
 void preGameMenu(const char *username, int isGuest);
 void scoreboard(const char *currentUser);
 void sortPlayers(Player players[], int count);
+int settingsMenu(const char *username);
 
 void createNewUserMenu();
 void loginUserMenu();
@@ -42,15 +43,14 @@ int main(){
     noecho();
     cbreak();
     int choice;
-
     do {
         clear();
         mvprintw(1, 1, "---- User Menu ----");
         mvprintw(3, 1, "1. Create New User");
         mvprintw(4, 1, "2. Login");
-        mvprintw(4, 1, "3. Guest Login");
-        mvprintw(5, 1, "4. Exit");
-        mvprintw(7, 1, "Enter your choice: ");
+        mvprintw(5, 1, "3. Guest Login");
+        mvprintw(6, 1, "4. Exit");
+        mvprintw(8, 1, "Enter your choice: ");
         echo();
         scanw("%d", &choice);
         noecho();
@@ -75,7 +75,6 @@ int main(){
                 getch();
         }
     } while(choice != 4);
-
     endwin();
     return 0;
 }
@@ -106,29 +105,55 @@ void preGameMenu(const char *username, int isGuest) {
     clear();
     mvprintw(1, 1, "---- PreGame Menu ----");
     if (isGuest) {
-        mvprintw(3, 1, "Guest mode: Starting a new game...");
-        refresh();
-        getch();
-        startNewGame(username);
+        mvprintw(3, 1, "1. Start Game");
+        mvprintw(4, 1, "2. View Scoreboard");
+        mvprintw(5, 1, "3. Settings");
+        mvprintw(7, 1, "Enter your choice: ");
+        echo();
+        scanw("%d", &choice);
+        noecho();
+        switch (choice){
+        case 1:
+            startNewGame(username);
+            break;
+        case 2:
+            scoreboard(username);
+            break;
+        case 3:
+            settingsMenu(username);
+            break;
+        default:
+            mvprintw(7, 1, "Invalid choice. Returning to main menu.");
+            refresh();
+            getch();
+        }
         return;
     }
     mvprintw(3, 1, "1. Start New Game");
     mvprintw(4, 1, "2. Continue Previous Game");
     mvprintw(5, 1, "3. View Scoreboard");
-    mvprintw(5, 1, "Enter your choice: ");
+    mvprintw(6, 1, "4. Settings");
+    mvprintw(7, 1, "Enter your choice: ");
     echo();
     scanw("%d", &choice);
     noecho();
-    if(choice == 1){
-        startNewGame(username);
-    } else if (choice == 2){
-        continueGame(username);
-    } else if (choice == 3){
-        scoreboard(username);
-    } else{
-        mvprintw(6, 1, "Invalid choice. Returning to main menu.");
-        refresh();
-        getch();
+    switch (choice){
+        case 1:
+            startNewGame(username);
+            break;
+        case 2:
+            continueGame(username);
+            break;
+        case 3:
+            scoreboard(username);
+            break;
+        case 4:
+            settingsMenu(username);
+            break;
+        default:
+            mvprintw(8, 1, "Invalid choice. Returning to main menu.");
+            refresh();
+            getch();
     }
 }
 
@@ -293,4 +318,32 @@ void sortPlayers(Player players[], int count){
             }
         }
     }
+}
+
+int settingsMenu(const char *username){
+    int difficulty, color;
+    clear();
+    mvprintw(1, 1, "---- Settings Menu ----");
+    mvprintw(3, 1, "Select Difficulty:");
+    mvprintw(4, 1, "1. Easy");
+    mvprintw(5, 1, "2. Medium");
+    mvprintw(6, 1, "3. Hard");
+    mvprintw(8, 1, "Enter choice: ");
+    echo();
+    scanw("%d", &difficulty);
+    noecho();
+    clear();
+    mvprintw(1, 1, "---- Settings Menu ----");
+    mvprintw(3, 1, "Select Character Color:");
+    mvprintw(4, 1, "1. Green");
+    mvprintw(5, 1, "2. Blue");
+    mvprintw(6, 1, "3. Yellow");
+    mvprintw(8, 1, "Enter choice: ");
+    echo();
+    scanw("%d", &color);
+    noecho();
+    mvprintw(10, 1, "Settings saved! Returning to menu...");
+    refresh();
+    getch();
+    return difficulty, color;
 }
