@@ -23,6 +23,7 @@ void saveUser(const char *username, const char *password, const char *email);
 int verifyLogin(const char *username, const char *password);
 void preGameMenu(const char *username, int isGuest);
 void scoreboard(const char *currentUser);
+void sortPlayers(Player players[], int count);
 
 void createNewUserMenu();
 void loginUserMenu();
@@ -271,7 +272,7 @@ void scoreboard(const char *currentUser) {
         else if (i == 2) attron(COLOR_PAIR(3));
         else attron(COLOR_PAIR(4));
         if (strcmp(players[i].username, currentUser) == 0) attron(A_BOLD);
-        mvprintw(row++, 1, "%d. %s - XP: %d, Score: %d, Gold: %d, Games: %d", i+1, players[i].username, players[i].experience, players[i].score, players[i].gold, players[i].gamesPlayed);
+        mvprintw(row++, 1, "%d. %s%s - XP: %d, Score: %d, Gold: %d, Games: %d", i+1, (i<3 ? "🏆" : ""), players[i].username, players[i].experience, players[i].score, players[i].gold, players[i].gamesPlayed);
         attroff(A_BOLD);
         attroff(COLOR_PAIR(1));
         attroff(COLOR_PAIR(2));
