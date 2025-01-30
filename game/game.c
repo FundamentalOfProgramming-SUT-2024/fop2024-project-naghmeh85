@@ -12,9 +12,13 @@ int ValidEmail(const char *email);
 int UsernameUnique(const char *username);
 void saveUser(const char *username, const char *password, const char *email);
 int verifyLogin(const char *username, const char *password);
+void preGameMenu(const char *username, int isGuest);
+
 void createNewUserMenu();
 void loginUserMenu();
 void guestLogin();
+void startNewGame();
+void continueGame();
 
 int main(){
     initscr();
@@ -53,7 +57,7 @@ int main(){
                 refresh();
                 getch();
         }
-    } while(choice != 3);
+    } while(choice != 4);
 
     endwin();
     return 0;
@@ -78,6 +82,34 @@ void loginUserMenu() {
     }
     refresh();
     getch();
+}
+
+void preGameMenu(const char *username, int isGuest) {
+    int choice;
+    clear();
+    mvprintw(1, 1, "---- PreGame Menu ----");
+    if (isGuest) {
+        mvprintw(3, 1, "Guest mode: Starting a new game...");
+        refresh();
+        getch();
+        startNewGame(username);
+        return;
+    }
+    mvprintw(3, 1, "1. Start New Game");
+    mvprintw(4, 1, "2. Continue Previous Game");
+    mvprintw(5, 1, "Enter your choice: ");
+    echo();
+    scanw("%d", &choice);
+    noecho();
+    if(choice == 1){
+        startNewGame(username);
+    } else if (choice == 2){
+        continueGame(username);
+    } else {
+        mvprintw(6, 1, "Invalid choice. Returning to main menu.");
+        refresh();
+        getch();
+    }
 }
 
 void createNewUserMenu(){
@@ -160,12 +192,6 @@ int UsernameUnique(const char *username) {
 
 void saveUser(const char *username, const char *password, const char *email) {
     FILE *file = fopen(FILENAME, "a");
-    // if (!file) {
-    //     mvprintw(8, 1, "Error: Could not open file for writing.");
-    //     refresh();
-    //     getch();
-    //     exit(1);
-    // }
     fprintf(file, "%s %s %s\n", username, password, email);
     fclose(file);
 }
@@ -189,6 +215,21 @@ void guestLogin(){
     mvprintw(1, 1, "---- Guest Login ----");
     mvprintw(3, 1, "You are logged in as a guest.");
     mvprintw(5, 1, "Note: Your game will not be saved.");
+    refresh();
+    getch();
+    preGameMenu("Guest", 1);
+}
+
+void startNewGame() {
+    clear();
+    mvprintw(1, 1, "Starting a new game...");
+    refresh();
+    getch();
+}
+
+void continueGame() {
+    clear();
+    mvprintw(1, 1, "Continuing previous game...");
     refresh();
     getch();
 }
