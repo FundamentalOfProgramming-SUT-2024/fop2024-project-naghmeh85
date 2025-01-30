@@ -6,6 +6,15 @@
 #include<ctype.h>
 
 #define FILENAME "users.txt"
+#define SCORE_FILE "score.txt"
+
+typedef struct {
+    char username[50];
+    int score;
+    int gold;
+    int gamesPlayed;
+    int experience;
+} Player;
 
 int ValidPassword(const char *password);
 int ValidEmail(const char *email);
@@ -13,6 +22,7 @@ int UsernameUnique(const char *username);
 void saveUser(const char *username, const char *password, const char *email);
 int verifyLogin(const char *username, const char *password);
 void preGameMenu(const char *username, int isGuest);
+void scoreboard(const char *currentUser);
 
 void createNewUserMenu();
 void loginUserMenu();
@@ -22,6 +32,12 @@ void continueGame();
 
 int main(){
     initscr();
+    start_color();
+    init_pair(1, COLOR_YELLOW, -1);
+    init_pair(2, COLOR_CYAN, -1);
+    init_pair(3, COLOR_GREEN, -1);
+    init_pair(4, COLOR_WHITE, -1);
+    init_pair(5, COLOR_RED, -1);
     noecho();
     cbreak();
     int choice;
@@ -97,6 +113,7 @@ void preGameMenu(const char *username, int isGuest) {
     }
     mvprintw(3, 1, "1. Start New Game");
     mvprintw(4, 1, "2. Continue Previous Game");
+    mvprintw(5, 1, "3. View Scoreboard");
     mvprintw(5, 1, "Enter your choice: ");
     echo();
     scanw("%d", &choice);
@@ -105,7 +122,9 @@ void preGameMenu(const char *username, int isGuest) {
         startNewGame(username);
     } else if (choice == 2){
         continueGame(username);
-    } else {
+    } else if (choice == 3){
+        scoreboard(username);
+    } else{
         mvprintw(6, 1, "Invalid choice. Returning to main menu.");
         refresh();
         getch();
@@ -232,4 +251,45 @@ void continueGame() {
     mvprintw(1, 1, "Continuing previous game...");
     refresh();
     getch();
+}
+
+void scoreboard(const char *currentUser) {
+    FILE *file = fopen(SCORE_FILE, "r");
+    Player players[100];
+    int count= 0;
+    while (fscanf(file, "%s %d %d %d %d", players[count].username, &players[count].score, &players[count].gold, &players[count].gamesPlayed, &players[count].experience) != EOF){
+        count++;
+        if (count >= 100) break;
+    }
+    fclose(file);
+    sortPlayers(players, count);
+    int row = 3;
+    mvprintw(1, 1, "---- Scoreboard ----");
+    for (int i=0; i < count; i++){
+        if (i == 0) attron(COLOR_PAIR(1));
+        else if (i == 1) attron(COLOR_PAIR(2));
+        else if (i == 2) attron(COLOR_PAIR(3));
+        else attron(COLOR_PAIR(4));
+        if (strcmp(players[i].username, currentUser) == 0) attron(A_BOLD);
+        mvprintw(row++, 1, "%d. %s - XP: %d, Score: %d, Gold: %d, Games: %d", i+1, players[i].username, players[i].experience, players[i].score, players[i].gold, players[i].gamesPlayed);
+        attroff(A_BOLD);
+        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(2));
+        attroff(COLOR_PAIR(3));
+        attroff(COLOR_PAIR(4));
+    }
+    refresh();
+    getch();
+}
+
+void sortPlayers(Player players[], int count){
+    for (int i=0; i < count-1; i++){
+        for (int j= i+1; j < count; j++){
+            if (players[j].experience > players[i].experience){
+                Player temp= players[i];
+                players[i]= players[j];
+                players[j]= temp;
+            }
+        }
+    }
 }
