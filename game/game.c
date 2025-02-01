@@ -4,9 +4,18 @@
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
+#include <time.h>
 
 #define FILENAME "users.txt"
 #define SCORE_FILE "score.txt"
+#define MAP_WIDTH 65
+#define MAP_HEIGHT 24
+
+char map[MAP_HEIGHT][MAP_WIDTH];
+
+typedef struct {
+    int x, y, width, height;
+} Room;
 
 typedef struct {
     char username[50];
@@ -25,12 +34,18 @@ void preGameMenu(const char *username, int isGuest);
 void scoreboard(const char *currentUser);
 void sortPlayers(Player players[], int count);
 int settingsMenu(const char *username);
+void generateRooms(Room rooms[], int *roomCount);
+void connectRooms(Room rooms[], int roomCount);
+void stair(Room rooms[], int roomCount);
+int checkOverlap(Room rooms[], int roomCount, Room newRoom);
 
 void createNewUserMenu();
 void loginUserMenu();
 void guestLogin();
 void startNewGame();
 void continueGame();
+void initMap();
+void renderMap();
 
 int main(){
     initscr();
@@ -267,8 +282,13 @@ void guestLogin(){
 
 void startNewGame() {
     clear();
-    mvprintw(1, 1, "Starting a new game...");
-    refresh();
+    Room rooms[10];
+    int roomCount= 0;
+    initMap();
+    generateRooms(rooms, &roomCount);
+    connectRooms(rooms, roomCount);
+    stair(rooms, roomCount);
+    renderMap();
     getch();
 }
 
@@ -346,4 +366,159 @@ int settingsMenu(const char *username){
     refresh();
     getch();
     return difficulty, color;
+}
+
+void initMap(){
+    for (int y=0; y < MAP_HEIGHT; y++){
+        for (int x=0; x < MAP_WIDTH; x++){
+            map[y][x] = ' ';
+        }
+    }
+}
+
+int checkOverlap(Room rooms[], int roomCount, Room newRoom) {
+    for (int i=0; i < roomCount; i++) {
+        if (!(newRoom.x + newRoom.width < rooms[i].x ||
+              newRoom.x > rooms[i].x + rooms[i].width ||
+              newRoom.y + newRoom.height < rooms[i].y ||
+              newRoom.y > rooms[i].y + rooms[i].height)){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void generateRooms(Room rooms[], int *roomCount) {
+    *roomCount = 6 + rand() % (10 - 6);
+    int count= 0;
+    while (count < *roomCount) {
+        int w= 4 + rand() % 6;
+        int h= 4 + rand() % 6;
+        int x= rand() % (MAP_WIDTH - w-1) + 1;
+        int y= rand() % (MAP_HEIGHT - h-1) + 1;
+        Room newRoom = {x, y, w, h};
+
+        if (!checkOverlap(rooms, count, newRoom)) {
+            rooms[count]= newRoom;
+            (count)++;            
+            for (int j=y; j < y+h; j++) {
+                for (int k=x; k < x+w; k++) {
+                    if (j == y || j == y+h-1){
+                        map[j][k] = '_'; 
+                    } else if(k == x || k == x+w-1){
+                        map[j][k]= '|';
+                    } else{
+                        map[j][k] = '.'; 
+                    }
+                }
+            }
+            int numDoors = 1 + rand() % 4;
+            for (int d=0; d < numDoors; d++){
+                int usedSides[4] = {0, 0, 0, 0};
+                for (int dr=0; dr < numDoors; dr++) {
+                    int doorSide;
+                    do {
+                        doorSide = rand() % 4;
+                    } while (usedSides[doorSide]);
+                    usedSides[doorSide] = 1;
+                    int doorX, doorY;
+                    switch (doorSide) {
+                        case 0:
+                            doorX = x + rand() % w;
+                            doorY = y;
+                            break;
+                        case 1:
+                            doorX = x + rand() % w;
+                            doorY = y + h - 1;
+                            break;
+                        case 2:
+                            doorX = x;
+                            doorY = y + rand() % h;
+                            break;
+                        case 3:
+                            doorX = x + w - 1;
+                            doorY = y + rand() % h;
+                            break;
+                    }
+                    // if (doorX > 0 && doorX < MAP_WIDTH - 1 && doorY > 0 && doorY < MAP_HEIGHT - 1){
+                    //     map[doorY][doorX] = '+';
+                    // }
+                    if (doorX > 2 && doorX < MAP_WIDTH - 3 && doorY > 2 && doorY < MAP_HEIGHT - 3) {
+                        map[doorY][doorX] = '+';
+                        int hallX = doorX, hallY = doorY;
+                        switch (doorSide) {
+                            case 0: hallY--; break;
+                            case 1: hallY++; break;
+                            case 2: hallX--; break;
+                            case 3: hallX++; break;
+                        }
+                        if (hallX > 1 && hallX < MAP_WIDTH - 2 && hallY > 1 && hallY < MAP_HEIGHT - 2 && map[hallY][hallX] == ' ') {
+                            map[hallY][hallX] = '#';
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void connectRooms(Room rooms[], int roomCount) {
+    for (int i=0; i < roomCount-1; i++) {
+        int x1, y1, x2, y2;
+        for (int j = 0; j < MAP_HEIGHT; j++) {
+            for (int k = 0; k < MAP_WIDTH; k++) {
+                if (map[j][k] == '+'){
+                    x1 = k;
+                    y1 = j;
+                    break;
+                }
+            }
+        }
+        int closest = i + 1;
+        int minDist = MAP_WIDTH + MAP_HEIGHT;
+        for (int j = i + 1; j < roomCount; j++) {
+            for (int dy = rooms[j].y; dy < rooms[j].y + rooms[j].height; dy++) {
+                for (int dx = rooms[j].x; dx < rooms[j].x + rooms[j].width; dx++) {
+                    if (map[dy][dx] == '+') {
+                        int dist = abs(x1 - dx) + abs(y1 - dy);
+                        if (dist < minDist) {
+                            closest = j;
+                            x2 = dx;
+                            y2 = dy;
+                            minDist = dist;
+                        }
+                    }
+                }
+            }
+        }
+        //while (map[y1][x1] != ' ' && x1 != x2) x1 += (x2 > x1) ? 1 : -1;
+        while (x1 != x2){
+            if (map[y1][x1] == ' ')
+                map[y1][x1] = '#';
+            x1 += (x2 > x1) ? 1 : -1;
+        }
+        while (map[y1][x1] != ' ' && y1 != y2) y1 += (y2 > y1) ? 1 : -1;
+        while (y1 != y2){
+            if (map[y1][x1] == ' ')
+                map[y1][x1] = '#';
+            y1 += (y2 > y1) ? 1 : -1;
+        }
+    }
+}
+
+void stair(Room rooms[], int roomCount) {
+    int index = rand() % roomCount;
+    int x = rooms[index].x + rooms[index].width / 2;
+    int y = rooms[index].y + rooms[index].height / 2;
+    map[y][x] = '<';
+}
+
+void renderMap() {
+    clear();
+    for (int y=0; y < MAP_HEIGHT; y++) {
+        for (int x=0; x < MAP_WIDTH; x++) {
+            mvaddch(y, x, map[y][x]);
+        }
+    }
+    refresh();
 }
