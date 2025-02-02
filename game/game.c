@@ -8,13 +8,19 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
-#define MUSIC_FILE "music1.mp3"
+#define MUSIC_FILE1 "music1.mp3"
+#define MUSIC_FILE2 "music2.mp3"
+#define MUSIC_FILE3 "music3.mp3"
 #define FILENAME "users.txt"
 #define SCORE_FILE "score.txt"
 #define MAP_WIDTH 65
 #define MAP_HEIGHT 24
 
 char map[MAP_HEIGHT][MAP_WIDTH];
+int difficulty= 2;
+int color= 2;
+char *musicFiles[]= {MUSIC_FILE1, MUSIC_FILE2, MUSIC_FILE3};
+int selectedMusic= 0;
 
 typedef struct {
     int x, y, width, height;
@@ -36,7 +42,6 @@ int verifyLogin(const char *username, const char *password);
 void preGameMenu(const char *username, int isGuest);
 void scoreboard(const char *currentUser);
 void sortPlayers(Player players[], int count);
-int settingsMenu(const char *username);
 void generateRooms(Room rooms[], int *roomCount);
 void connectRooms(Room rooms[], int roomCount);
 void stair(Room rooms[], int roomCount);
@@ -49,10 +54,12 @@ void startNewGame();
 void continueGame();
 void initMap();
 void renderMap();
-void playMusic();
+void playMusic(int track);
+void settingsMenu();
+void applySettings();
 
 int main(){
-    playMusic();
+    playMusic(selectedMusic);
     initscr();
     start_color();
     init_pair(1, COLOR_YELLOW, -1);
@@ -102,9 +109,10 @@ int main(){
     return 0;
 }
 
-void playMusic() {
+void playMusic(int track) {
+    Mix_HaltMusic();
     Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
-    Mix_Music *music = Mix_LoadMUS(MUSIC_FILE);
+    Mix_Music *music = Mix_LoadMUS(musicFiles[track]);
     if (music) {
         Mix_PlayMusic(music, -1);
         Mix_VolumeMusic(MIX_MAX_VOLUME);
@@ -357,8 +365,7 @@ void sortPlayers(Player players[], int count){
     }
 }
 
-int settingsMenu(const char *username){
-    int difficulty, color;
+void settingsMenu() {
     clear();
     mvprintw(1, 1, "---- Settings Menu ----");
     mvprintw(3, 1, "Select Difficulty:");
@@ -379,10 +386,31 @@ int settingsMenu(const char *username){
     echo();
     scanw("%d", &color);
     noecho();
-    mvprintw(10, 1, "Settings saved! Returning to menu...");
+    clear();
+    mvprintw(1, 1, "---- Settings Menu ----");
+    mvprintw(3, 1, "Select Background Music:");
+    mvprintw(4, 1, "1. Track 1");
+    mvprintw(5, 1, "2. Track 2");
+    mvprintw(6, 1, "3. Track 3");
+    mvprintw(8, 1, "Enter choice: ");
+    echo();
+    scanw("%d", &selectedMusic);
+    noecho();
+    selectedMusic= selectedMusic-1;
+    applySettings();
+    mvprintw(14, 1, "Settings saved! Returning to menu...");
     refresh();
     getch();
-    return difficulty, color;
+}
+
+void applySettings() {
+    start_color();
+    if (color == 1) init_pair(6, COLOR_GREEN, -1);
+    else if (color == 2) init_pair(7, COLOR_BLUE, -1);
+    else if (color == 3) init_pair(8, COLOR_YELLOW, -1);
+    attron(COLOR_PAIR(6 + color - 1));
+    attroff(COLOR_PAIR(6 + color - 1));
+    playMusic(selectedMusic);
 }
 
 void initMap(){
