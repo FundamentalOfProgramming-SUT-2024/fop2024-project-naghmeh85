@@ -392,7 +392,8 @@ void settingsMenu() {
     mvprintw(4, 1, "1. Track 1");
     mvprintw(5, 1, "2. Track 2");
     mvprintw(6, 1, "3. Track 3");
-    mvprintw(8, 1, "Enter choice: ");
+    mvprintw(7, 1, "0. Stop Music");
+    mvprintw(9, 1, "Enter choice: ");
     echo();
     scanw("%d", &selectedMusic);
     noecho();
