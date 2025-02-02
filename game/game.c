@@ -59,6 +59,7 @@ void renderMap();
 void playMusic(int track);
 void settingsMenu();
 void applySettings();
+void forgotPass();
 
 int main(){
     playMusic(selectedMusic);
@@ -123,6 +124,19 @@ void playMusic(int track) {
 
 void loginUserMenu() {
     char username[50], password[50];
+    int choice;
+    clear();
+    mvprintw(1, 1, "---- User Login ----");
+    mvprintw(3, 1, "1. Enter Username and Password");
+    mvprintw(4, 1, "2. Forgot Password?");
+    mvprintw(5, 1, "Enter choice: ");
+    echo();
+    scanw("%d", &choice);
+    noecho();
+    if (choice == 2) {
+        forgotPass();
+        return;
+    }
     clear();
     mvprintw(1, 1, "---- User Login ----");
     mvprintw(3, 1, "Enter username: ");
@@ -137,6 +151,35 @@ void loginUserMenu() {
         mvprintw(6, 1, "Login successful! Welcome, %s.", username);
     } else{
         mvprintw(6, 1, "Error: Invalid username or password.");
+    }
+    refresh();
+    getch();
+}
+
+void forgotPass() {
+    char username[50], email[100], fileUsername[50], filePassword[50], fileEmail[100];
+    clear();
+    mvprintw(1, 1, "---- Forgot Password ----");
+    mvprintw(3, 1, "Enter your username: ");
+    echo();
+    getstr(username);
+    noecho();
+    mvprintw(4, 1, "Enter your registered email: ");
+    echo();
+    getstr(email);
+    noecho();
+    FILE *file= fopen(FILENAME, "r");
+    int found= 0;
+    while (fscanf(file, "%s %s %s", fileUsername, filePassword, fileEmail) != EOF) {
+        if (strcmp(username, fileUsername) == 0 && strcmp(email, fileEmail) == 0) {
+            mvprintw(7, 1, "Your password: %s", filePassword);
+            found= 1;
+            break;
+        }
+    }
+    fclose(file);
+    if (!found) {
+        mvprintw(7, 1, "Error: Username or email incorrect.");
     }
     refresh();
     getch();
