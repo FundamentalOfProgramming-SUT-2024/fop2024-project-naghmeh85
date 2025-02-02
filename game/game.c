@@ -15,6 +15,7 @@
 #define SCORE_FILE "score.txt"
 #define MAP_WIDTH 65
 #define MAP_HEIGHT 24
+#define PASSWORD_LENGTH 8
 
 char map[MAP_HEIGHT][MAP_WIDTH];
 int difficulty= 2;
@@ -46,6 +47,7 @@ void generateRooms(Room rooms[], int *roomCount);
 void connectRooms(Room rooms[], int roomCount);
 void stair(Room rooms[], int roomCount);
 int checkOverlap(Room rooms[], int roomCount, Room newRoom);
+void generatePassword(char *password);
 
 void createNewUserMenu();
 void loginUserMenu();
@@ -197,8 +199,24 @@ void preGameMenu(const char *username, int isGuest) {
     }
 }
 
+void generatePassword(char *password) {
+    const char *chars= "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    int hasUpper= 0, hasLower= 0, hasDigit= 0;
+    while (!(hasUpper && hasLower && hasDigit)) {
+        hasUpper= hasLower= hasDigit= 0;
+        for (int i=0; i < PASSWORD_LENGTH; i++) {
+            password[i]= chars[rand() % strlen(chars)];
+            if (isupper(password[i])) hasUpper= 1;
+            if (islower(password[i])) hasLower= 1;
+            if (isdigit(password[i])) hasDigit= 1;
+        }
+        password[PASSWORD_LENGTH]= '\0';
+    }
+}
+
 void createNewUserMenu(){
     char username[100], password[100], email[150];
+    int choice;
     clear();
     mvprintw(1, 1, "---- Create New User ----");
     mvprintw(3, 1, "Enter username: ");
@@ -211,31 +229,48 @@ void createNewUserMenu(){
         getch();
         return;
     }
-
-    mvprintw(4, 1, "Enter password: ");
+    mvprintw(4, 1, "Choose Password:");
+    mvprintw(5, 1, "1. Enter manually");
+    mvprintw(6, 1, "2. Generate random password");
+    mvprintw(8, 1, "Enter choice: ");
     echo();
-    getstr(password);
+    scanw("%d", &choice);
     noecho();
-    if (!ValidPassword(password)) {
-        mvprintw(6, 1, "Error: Password must be at least 7 characters long and include a number, an uppercase letter, and a lowercase letter.");
+    if (choice == 1) {
+        mvprintw(9, 1, "Enter password: ");
+        echo();
+        getstr(password);
+        noecho();
+        if (!ValidPassword(password)) {
+            mvprintw(11, 1, "Error: Password must be at least 7 characters long and include a number, an uppercase letter, and a lowercase letter.");
+            refresh();
+            getch();
+            return;
+        }
+    } else if(choice == 2){
+        srand(time(NULL));
+        generatePassword(password);
+        mvprintw(9, 1, "Generated password: %s", password);
+        refresh();
+        getch();
+    } else {
+        mvprintw(9, 1, "Invalid choice.");
         refresh();
         getch();
         return;
     }
-
-    mvprintw(5, 1, "Enter email: ");
+    mvprintw(10, 1, "Enter email: ");
     echo();
     getstr(email);
     noecho();
     if (!ValidEmail(email)) {
-        mvprintw(7, 1, "Error: Invalid email format.");
+        mvprintw(12, 1, "Error: Invalid email format.");
         refresh();
         getch();
         return;
     }
-
     saveUser(username, password, email);
-    mvprintw(7, 1, "User created successfully!");
+    mvprintw(12, 1, "User created successfully!");
     refresh();
     getch();
 }
