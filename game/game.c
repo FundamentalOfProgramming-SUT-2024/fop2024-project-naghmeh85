@@ -5,6 +5,7 @@
 #include<string.h>
 #include<ctype.h>
 #include <time.h>
+#include <locale.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
@@ -64,7 +65,9 @@ void forgotPass();
 int main(){
     playMusic(selectedMusic);
     initscr();
+    setlocale(LC_ALL, "en_US.UTF-8");
     start_color();
+    use_default_colors();
     init_pair(1, COLOR_YELLOW, -1);
     init_pair(2, COLOR_CYAN, -1);
     init_pair(3, COLOR_GREEN, -1);
@@ -410,7 +413,6 @@ void scoreboard(const char *currentUser) {
         count++;
         if (count >= 100) break;
     }
-    fclose(file);
     sortPlayers(players, count);
     int row = 3;
     mvprintw(1, 1, "---- Scoreboard ----");
@@ -420,13 +422,14 @@ void scoreboard(const char *currentUser) {
         else if (i == 2) attron(COLOR_PAIR(3));
         else attron(COLOR_PAIR(4));
         if (strcmp(players[i].username, currentUser) == 0) attron(A_BOLD);
-        mvprintw(row++, 1, "%d. %s%s - XP: %d, Score: %d, Gold: %d, Games: %d", i+1, (i<3 ? "🏆" : ""), players[i].username, players[i].experience, players[i].score, players[i].gold, players[i].gamesPlayed);
+        mvprintw(row++, 1, "%d. %s%s - XP: %d, Score: %d, Gold: %d, Games: %d", i+1, (i<3 ? "\U0001F3C6" : ""), players[i].username, players[i].experience, players[i].score, players[i].gold, players[i].gamesPlayed);
         attroff(A_BOLD);
         attroff(COLOR_PAIR(1));
         attroff(COLOR_PAIR(2));
         attroff(COLOR_PAIR(3));
         attroff(COLOR_PAIR(4));
     }
+    fclose(file);
     refresh();
     getch();
 }
@@ -434,7 +437,7 @@ void scoreboard(const char *currentUser) {
 void sortPlayers(Player players[], int count){
     for (int i=0; i < count-1; i++){
         for (int j= i+1; j < count; j++){
-            if (players[j].experience > players[i].experience){
+            if (players[j].score > players[i].score){
                 Player temp= players[i];
                 players[i]= players[j];
                 players[j]= temp;
