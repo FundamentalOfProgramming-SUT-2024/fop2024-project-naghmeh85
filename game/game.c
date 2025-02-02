@@ -5,7 +5,10 @@
 #include<string.h>
 #include<ctype.h>
 #include <time.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 
+#define MUSIC_FILE "music1.mp3"
 #define FILENAME "users.txt"
 #define SCORE_FILE "score.txt"
 #define MAP_WIDTH 65
@@ -46,8 +49,10 @@ void startNewGame();
 void continueGame();
 void initMap();
 void renderMap();
+void playMusic();
 
 int main(){
+    playMusic();
     initscr();
     start_color();
     init_pair(1, COLOR_YELLOW, -1);
@@ -91,7 +96,19 @@ int main(){
         }
     } while(choice != 4);
     endwin();
+    // Mix_FreeMusic(music);
+    // Mix_CloseAudio();
+    // SDL_Quit();
     return 0;
+}
+
+void playMusic() {
+    Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
+    Mix_Music *music = Mix_LoadMUS(MUSIC_FILE);
+    if (music) {
+        Mix_PlayMusic(music, -1);
+        Mix_VolumeMusic(MIX_MAX_VOLUME);
+    }
 }
 
 void loginUserMenu() {
@@ -389,7 +406,7 @@ int checkOverlap(Room rooms[], int roomCount, Room newRoom) {
 }
 
 void generateRooms(Room rooms[], int *roomCount) {
-    *roomCount = 6 + rand() % (10 - 6);
+    *roomCount = 6 + rand() % (10 - 5);
     int count= 0;
     while (count < *roomCount) {
         int w= 4 + rand() % 6;
@@ -404,7 +421,7 @@ void generateRooms(Room rooms[], int *roomCount) {
             for (int j=y; j < y+h; j++) {
                 for (int k=x; k < x+w; k++) {
                     if (j == y || j == y+h-1){
-                        map[j][k] = '_'; 
+                        map[j][k] = '-'; 
                     } else if(k == x || k == x+w-1){
                         map[j][k]= '|';
                     } else{
@@ -464,44 +481,56 @@ void generateRooms(Room rooms[], int *roomCount) {
 
 void connectRooms(Room rooms[], int roomCount) {
     for (int i=0; i < roomCount-1; i++) {
-        int x1, y1, x2, y2;
-        for (int j = 0; j < MAP_HEIGHT; j++) {
-            for (int k = 0; k < MAP_WIDTH; k++) {
-                if (map[j][k] == '+'){
-                    x1 = k;
-                    y1 = j;
+        int doorX1= -1, doorY1= -1;
+        int doorX2= -1, doorY2= -1;
+        Room r1= rooms[i];
+        for (int y= r1.y; y < r1.y + r1.height; y++) {
+            for (int x= r1.x; x < r1.x + r1.width; x++) {
+                if (map[y][x] == '+') {
+                    doorX1= x;
+                    doorY1= y;
                     break;
                 }
             }
+            if (doorX1 != -1) break;
         }
-        int closest = i + 1;
-        int minDist = MAP_WIDTH + MAP_HEIGHT;
-        for (int j = i + 1; j < roomCount; j++) {
-            for (int dy = rooms[j].y; dy < rooms[j].y + rooms[j].height; dy++) {
-                for (int dx = rooms[j].x; dx < rooms[j].x + rooms[j].width; dx++) {
-                    if (map[dy][dx] == '+') {
-                        int dist = abs(x1 - dx) + abs(y1 - dy);
-                        if (dist < minDist) {
-                            closest = j;
-                            x2 = dx;
-                            y2 = dy;
-                            minDist = dist;
-                        }
-                    }
+        Room r2= rooms[i + 1];
+        for (int y= r2.y; y < r2.y + r2.height; y++) {
+            for (int x= r2.x; x < r2.x + r2.width; x++) {
+                if (map[y][x] == '+') {
+                    doorX2= x;
+                    doorY2= y;
+                    break;
                 }
             }
+            if (doorX2 != -1) break;
         }
-        //while (map[y1][x1] != ' ' && x1 != x2) x1 += (x2 > x1) ? 1 : -1;
-        while (x1 != x2){
-            if (map[y1][x1] == ' ')
-                map[y1][x1] = '#';
-            x1 += (x2 > x1) ? 1 : -1;
+        int pivotX = doorX1 + (rand() % abs(doorX2 - doorX1+1)) * ((doorX2 > doorX1) ? 1 : -1);
+        int pivotY = doorY1 + (rand() % abs(doorY2 - doorY1+1)) * ((doorY2 > doorY1) ? 1 : -1);
+        int curX= doorX1, curY= doorY1;
+        while (curX != pivotX) {
+            if (map[curY][curX] == ' ') {
+                map[curY][curX] = '#';
+            }
+            curX+= (pivotX > curX) ? 1 : -1;
         }
-        while (map[y1][x1] != ' ' && y1 != y2) y1 += (y2 > y1) ? 1 : -1;
-        while (y1 != y2){
-            if (map[y1][x1] == ' ')
-                map[y1][x1] = '#';
-            y1 += (y2 > y1) ? 1 : -1;
+        while (curY != pivotY) {
+            if (map[curY][curX] == ' ') {
+                map[curY][curX] = '#';
+            }
+            curY+= (pivotY > curY) ? 1 : -1;
+        }
+        while (pivotX != doorX2) {
+            if (map[curY][curX] == ' '){
+                map[curY][curX] = '#';
+            }
+            pivotX+= (doorX2 > pivotX) ? 1 : -1;
+        }
+        while (pivotY != doorY2) {
+            if (map[curY][curX] == ' '){
+                map[curY][curX] = '#';
+            }
+            pivotY+= (doorY2 > pivotY) ? 1 : -1;
         }
     }
 }
