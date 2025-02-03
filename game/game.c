@@ -1,4 +1,6 @@
 //403106068
+#define _GNU_SOURCE
+
 #include<ncurses.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -422,7 +424,17 @@ void scoreboard(const char *currentUser) {
         else if (i == 2) attron(COLOR_PAIR(3));
         else attron(COLOR_PAIR(4));
         if (strcmp(players[i].username, currentUser) == 0) attron(A_BOLD);
-        mvprintw(row++, 1, "%d. %s%s - XP: %d, Score: %d, Gold: %d, Games: %d", i+1, (i<3 ? "\U0001F3C6" : ""), players[i].username, players[i].experience, players[i].score, players[i].gold, players[i].gamesPlayed);
+        char displayName[50];
+        const char *symbol = "";
+        if (i == 0) { strcpy(displayName, "khafan"); symbol = "\u272A"; } 
+        else if (i == 1) { strcpy(displayName, "mashti"); symbol = "\u2736"; } 
+        else if (i == 2) { strcpy(displayName, "bahal"); symbol = "\u2B52"; } 
+        else strcpy(displayName, players[i].username);
+        char line[100];
+        snprintf(line, sizeof(line), "%d. %s%s - XP: %d, Score: %d, Gold: %d, Games: %d",
+                 i+1, symbol, displayName, players[i].experience,
+                 players[i].score, players[i].gold, players[i].gamesPlayed);
+        mvaddstr(row++, 1, line);
         attroff(A_BOLD);
         attroff(COLOR_PAIR(1));
         attroff(COLOR_PAIR(2));
