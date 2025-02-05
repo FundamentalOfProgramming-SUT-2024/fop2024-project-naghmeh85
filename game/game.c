@@ -154,6 +154,7 @@ void loginUserMenu() {
     noecho();
     if (verifyLogin(username, password)){
         mvprintw(6, 1, "Login successful! Welcome, %s.", username);
+        preGameMenu(username, 0);
     } else{
         mvprintw(6, 1, "Error: Invalid username or password.");
     }
