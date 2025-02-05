@@ -52,6 +52,9 @@ void connectRooms(Room rooms[], int roomCount);
 void stair(Room rooms[], int roomCount);
 int checkOverlap(Room rooms[], int roomCount, Room newRoom);
 void generatePassword(char *password);
+void getEmail(const char *username, char *email, size_t size);
+void playerInfo(const char *username, Player *player);
+void profileMenu(const char *username);
 
 void createNewUserMenu();
 void loginUserMenu();
@@ -223,9 +226,10 @@ void preGameMenu(const char *username, int isGuest) {
     }
     mvprintw(3, 1, "1. Start New Game");
     mvprintw(4, 1, "2. Continue Previous Game");
-    mvprintw(5, 1, "3. View Scoreboard");
-    mvprintw(6, 1, "4. Settings");
-    mvprintw(7, 1, "Enter your choice: ");
+    mvprintw(5, 1, "3. Profile Menu");
+    mvprintw(6, 1, "4. View Scoreboard");
+    mvprintw(7, 1, "5. Settings");
+    mvprintw(8, 1, "Enter your choice: ");
     echo();
     scanw("%d", &choice);
     noecho();
@@ -237,13 +241,16 @@ void preGameMenu(const char *username, int isGuest) {
             continueGame(username);
             break;
         case 3:
-            scoreboard(username);
+            profileMenu(username);
             break;
         case 4:
+            scoreboard(username);
+            break;
+        case 5:
             settingsMenu(username);
             break;
         default:
-            mvprintw(8, 1, "Invalid choice. Returning to main menu.");
+            mvprintw(9, 1, "Invalid choice. Returning to main menu.");
             refresh();
             getch();
     }
@@ -680,4 +687,56 @@ void renderMap() {
         }
     }
     refresh();
+}
+
+void profileMenu(const char *username) {
+    clear();  
+    Player player;
+    char email[100];
+    playerInfo(username, &player);
+    getEmail(username, email, sizeof(email));
+
+    mvprintw(1, 1, " ----User Profile---- ");
+
+    mvprintw(3, 1, "Name: %s", username);
+    mvprintw(4, 1, "Email: %s", email);
+    mvprintw(5, 1, "Score: %d", player.score);
+    mvprintw(6, 1, "Gold: %d", player.gold);
+    mvprintw(7, 1, "XP: %d", player.experience);
+    mvprintw(8, 1, "Games played: %d", player.gamesPlayed);
+
+    mvprintw(10, 1, "Press any key to exit...");
+
+    refresh();
+    getch();
+}
+
+void getEmail(const char *username, char *email, size_t size) {
+    FILE *file = fopen(FILENAME, "r");
+    char fileUsername[50], filePassword[50], fileEmail[100];
+    while (fscanf(file, "%s %s %s", fileUsername, filePassword, fileEmail) != EOF) {
+        if (strcmp(username, fileUsername) == 0) {
+            strncpy(email, fileEmail, size-1);
+            email[size-1] = '\0';
+            fclose(file);
+            return ;
+        }
+    }
+    fclose(file);
+}
+
+void playerInfo(const char *username, Player *player) {
+    FILE *file = fopen(SCORE_FILE, "r");
+    char fileUsername[50];
+    int fileScore, fileGold, fileGames, fileExperience ;
+    while (fscanf(file, "%s %d %d %d %d", fileUsername, &fileScore, &fileGold, &fileGames, &fileExperience) != EOF) {
+        if (strcmp(username, fileUsername) == 0) {
+            player->score= fileScore;
+            player->gold= fileGold;
+            player->gamesPlayed= fileGames;
+            player->experience= fileExperience;
+            fclose(file);
+            return;
+        }
+    }
 }
