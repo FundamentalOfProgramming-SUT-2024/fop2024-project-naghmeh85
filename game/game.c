@@ -7,6 +7,7 @@
 #include<string.h>
 #include<ctype.h>
 #include <time.h>
+#include <wchar.h>
 #include <locale.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -430,16 +431,17 @@ void scoreboard(const char *currentUser) {
         else attron(COLOR_PAIR(4));
         if (strcmp(players[i].username, currentUser) == 0) attron(A_BOLD);
         char displayName[50];
-        const char *symbol = "";
-        if (i == 0) { strcpy(displayName, "khafan"); symbol = "\u272A"; attron(A_ITALIC);} 
-        else if (i == 1) { strcpy(displayName, "mashti"); symbol = "\u2736"; attron(A_ITALIC); } 
-        else if (i == 2) { strcpy(displayName, "bahal"); symbol = "\u2B52"; attron(A_ITALIC);} 
+        wchar_t *symbol = L"";
+        if (i == 0) { strcpy(displayName, "khafan"); symbol = L"🏆"; attron(A_ITALIC);} 
+        else if (i == 1) { strcpy(displayName, "mashti"); symbol = L"🥈"; attron(A_ITALIC); } 
+        else if (i == 2) { strcpy(displayName, "bahal"); symbol = L"🥉"; attron(A_ITALIC);} 
         else {strcpy(displayName, players[i].username); attroff(A_ITALIC);}
         char line[100];
-        snprintf(line, sizeof(line), "%d. %s%s - Score: %d, XP: %d, Gold: %d, Games: %d",
-                 i+1, symbol, displayName, players[i].score,
+        snprintf(line, sizeof(line), "%d. %s - Score: %d, XP: %d, Gold: %d, Games: %d",
+                 i+1, displayName, players[i].score,
                  players[i].experience, players[i].gold, players[i].gamesPlayed);
-        mvaddstr(row++, 1, line);
+        mvaddstr(row, 1, line);
+        mvaddwstr(row++,1+ strlen(line)+1, symbol);
         attroff(A_BOLD);
         attroff(A_ITALIC);
         attroff(COLOR_PAIR(1));
