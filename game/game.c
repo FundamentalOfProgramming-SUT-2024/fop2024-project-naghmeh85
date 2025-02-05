@@ -339,7 +339,11 @@ int ValidPassword(const char *password) {
 int ValidEmail(const char *email) {
     const char *at = strchr(email, '@');
     const char *dot = strrchr(email, '.');
-    return at && dot && at < dot && dot - at > 1 && strlen(dot) > 1;
+    if(!at || !dot) return 0;
+    else if(at == email) return 0;
+    else if(dot-at == 1) return 0;
+    else if(*(dot+1) == '\0') return 0;
+    else return 1;
 }
 
 int UsernameUnique(const char *username) {
