@@ -432,7 +432,7 @@ void scoreboard(const char *currentUser) {
         else if (i == 2) { strcpy(displayName, "bahal"); symbol = "\u2B52"; attron(A_ITALIC);} 
         else {strcpy(displayName, players[i].username); attroff(A_ITALIC);}
         char line[100];
-        snprintf(line, sizeof(line), "%d. %s%s - XP: %d, Score: %d, Gold: %d, Games: %d",
+        snprintf(line, sizeof(line), "%d. %s%s - Score: %d, XP: %d, Gold: %d, Games: %d",
                  i+1, symbol, displayName, players[i].score,
                  players[i].experience, players[i].gold, players[i].gamesPlayed);
         mvaddstr(row++, 1, line);
